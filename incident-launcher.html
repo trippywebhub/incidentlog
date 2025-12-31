@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Incident Launcher</title>
+<style>
+  /* Floating button */
+  #launcherBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 14px 20px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 99999;
+  }
+
+  /* Popup window */
+  #incidentPopup {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 300px;
+    background: #222;
+    color: white;
+    padding: 16px;
+    border-radius: 10px;
+    display: none;
+    z-index: 99999;
+    box-shadow: 0 0 10px rgba(0,0,0,0.6);
+  }
+
+  #incidentPopup select,
+  #incidentPopup textarea,
+  #incidentPopup button {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  #incidentPopup textarea {
+    height: 80px;
+    resize: none;
+  }
+
+  #submitBtn {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  #closeBtn {
+    background: #555;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<button id="launcherBtn">Submit Incident</button>
+
+<div id="incidentPopup">
+  <label>Priority:</label>
+  <select id="prioritySelect">
+    <option value="1">Priority 1 — Critical</option>
+    <option value="2">Priority 2 — High</option>
+    <option value="3" selected>Priority 3 — Normal</option>
+    <option value="4">Priority 4 — Low</option>
+    <option value="5">Priority 5 — Info Only</option>
+  </select>
+
+  <label>Incident:</label>
+  <textarea id="incidentText" placeholder="Describe the incident..."></textarea>
+
+  <button id="submitBtn">Submit</button>
+  <button id="closeBtn">Close</button>
+</div>
+
+<script>
+/* === CONFIG === */
+const crewID = "716";
+const deviceID = "Device-01"; // Change per device
+const endpointURL = "https://script.google.com/macros/s/AKfycbzxR9N1WAqiGJc0qehtd_iP29iiU39R_JAiHzFV7_gmvp5lRL2lS5tRQbp97A-CfDlm/exec"; // <-- IMPORTANT
+
+const codenames = [
+  "Alpha","Bravo","Charlie","Delta","Echo","Foxtrot","Golf","Hotel",
+  "India","Juliet","Kilo","Lima","Mike","November","Oscar","Papa",
+  "Quebec","Romeo","Sierra","Tango","Uniform","Victor","Whiskey",
+  "Xray","Yankee","Zulu"
+];
+
+let codenameIndex = 0;
+
+/* === UI ELEMENTS === */
+const launcherBtn = document.getElementById("launcherBtn");
+const popup = document.getElementById("incidentPopup");
+const submitBtn = document.getElementById("submitBtn");
+const closeBtn = document.getElementById("closeBtn");
+
+/* === OPEN POPUP === */
+launcherBtn.onclick = () => {
+  popup.style.display = "block";
+};
+
+/* === CLOSE POPUP === */
+closeBtn.onclick = () => {
+  popup.style.display = "none";
+};
+
+/* === SUBMIT INCIDENT === */
+submitBtn.onclick = async () => {
+  const priority = document.getElementById("prioritySelect").value;
+  const text = document.getElementById("incidentText").value.trim();
+
+  if (!text) {
+    alert("Please enter an incident description.");
+    return;
+  }
+
+  const timestamp = new Date().toLocaleString();
+  const codename = codenames[codenameIndex];
+
+  const payload = {
+    timestamp,
+    crewID,
+    codename,
+    priority,
+    incident: text,
+    deviceID
+  };
+
+  try {
+    const response = await fetch(endpointURL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const result = await response.json();
+    console.log("Hub Response:", result);
+
+    alert("Incident submitted successfully.");
+
+  } catch (err) {
+    console.error("Error submitting incident:", err);
+    alert("Error sending incident. Check console.");
+  }
+
+  codenameIndex = (codenameIndex + 1) % codenames.length;
+  document.getElementById("incidentText").value = "";
+  popup.style.display = "none";
+};
+</script>
+
+</body>
+</html>
